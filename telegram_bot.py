@@ -9,9 +9,9 @@ import time
 # 🔑 TELEGRAM SETTINGS
 # =========================
 TELEGRAM_TOKEN = "8425170540:AAH4FpyLEX83vn413p-o2yINwZpIplomVEg"
-CHAT_ID = 5335232406
-
 FRED_API_KEY = "27af567b7542c18ee527d92a06f330a0"
+
+TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
 # =========================
 # 📡 SAFE FRED FETCH
@@ -56,11 +56,13 @@ def market_prices():
     wti = asset("CL=F")
 
     kospi_d = yf.Ticker("^KS200").history(period="1d")
-    kospi_close = kospi_d["Close"].iloc[-1]
-    kospi_high = kospi_d["High"].iloc[-1]
-    kospi_low = kospi_d["Low"].iloc[-1]
 
-    return usd, jpy, gold, wti, kospi_close, kospi_high, kospi_low
+    return (
+        usd, jpy, gold, wti,
+        kospi_d["Close"].iloc[-1],
+        kospi_d["High"].iloc[-1],
+        kospi_d["Low"].iloc[-1]
+    )
 
 # =========================
 # 🇺🇸 US MACRO
@@ -136,17 +138,28 @@ ADP 민간고용: {fmt(m['adp'])}
 """.strip()
 
 # =========================
-# 🤖 SEND LOOP
+# 🤖 BOT LOOP (명령 대기)
 # =========================
 def run_bot():
-    print("🤖 텔레그램 시장 브리핑 봇 실행 중...")
+    print("🤖 텔레그램 봇 실행 중... ('.' 입력 시 브리핑 전송)")
+    offset = None
 
     while True:
-        requests.post(
-            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
-            data={"chat_id": CHAT_ID, "text": build_message()}
-        )
-        time.sleep(60 * 60)  # 1시간마다 전송
+        r = requests.get(f"{TELEGRAM_API}/getUpdates", params={"offset": offset, "timeout": 60}).json()
+
+        for u in r.get("result", []):
+            offset = u["update_id"] + 1
+            msg = u.get("message", {})
+            text = msg.get("text", "")
+            chat_id = msg.get("chat", {}).get("id")
+
+            if text.strip() == ".":
+                requests.post(
+                    f"{TELEGRAM_API}/sendMessage",
+                    data={"chat_id": chat_id, "text": build_message()}
+                )
+
+        time.sleep(1)
 
 if __name__ == "__main__":
     run_bot()
