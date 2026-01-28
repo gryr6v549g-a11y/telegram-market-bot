@@ -5,7 +5,12 @@ import yfinance as yf
 from datetime import datetime
 import time
 
-TELEGRAM_TOKEN = "8425170540:AAH59mm5RL1uRciPNb-7XFKSkwUxptMPSWQ"
+# =========================
+# 🔑 TELEGRAM SETTINGS
+# =========================
+TELEGRAM_TOKEN = "8425170540:AAH4FpyLEX83vn413p-o2yINwZpIplomVEg"
+CHAT_ID = 5335232406
+
 FRED_API_KEY = "27af567b7542c18ee527d92a06f330a0"
 
 # =========================
@@ -131,30 +136,17 @@ ADP 민간고용: {fmt(m['adp'])}
 """.strip()
 
 # =========================
-# 🤖 TELEGRAM BOT
+# 🤖 SEND LOOP
 # =========================
 def run_bot():
     print("🤖 텔레그램 시장 브리핑 봇 실행 중...")
-    offset = None
 
     while True:
-        updates = requests.get(
-            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates",
-            params={"offset": offset, "timeout": 30}
-        ).json()
-
-        for u in updates.get("result", []):
-            offset = u["update_id"] + 1
-            text = u["message"].get("text", "")
-            chat_id = u["message"]["chat"]["id"]
-
-            if text.strip() == ".":
-                requests.post(
-                    f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
-                    data={"chat_id": chat_id, "text": build_message()}
-                )
-
-        time.sleep(1)
+        requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+            data={"chat_id": CHAT_ID, "text": build_message()}
+        )
+        time.sleep(60 * 60)  # 1시간마다 전송
 
 if __name__ == "__main__":
     run_bot()

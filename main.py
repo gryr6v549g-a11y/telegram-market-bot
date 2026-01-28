@@ -1,5 +1,4 @@
-print("Telegram market bot starting...")
+from telegram_bot import send_message
 
-import time
-while True:
-    time.sleep(60)
+print("🤖 텔레그램 봇 실행됨")
+send_message("✅ Railway에서 텔레그램 봇 정상 작동 중")
