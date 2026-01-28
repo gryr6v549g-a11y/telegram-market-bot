@@ -3,6 +3,7 @@
 import requests
 import yfinance as yf
 from datetime import datetime
+from zoneinfo import ZoneInfo   # ⭐ 한국시간용
 import time
 
 # =========================
@@ -98,7 +99,9 @@ def fmt(v, suf=""):
 # 📝 MESSAGE
 # =========================
 def build_message():
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # ⭐ 한국시간 적용
+    now = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M:%S")
+
     usd, jpy, gold, wti, kospi, k_high, k_low = market_prices()
     m = us_macro()
 
@@ -138,14 +141,17 @@ ADP 민간고용: {fmt(m['adp'])}
 """.strip()
 
 # =========================
-# 🤖 BOT LOOP (명령 대기)
+# 🤖 BOT LOOP ('.' 명령)
 # =========================
 def run_bot():
     print("🤖 텔레그램 봇 실행 중... ('.' 입력 시 브리핑 전송)")
     offset = None
 
     while True:
-        r = requests.get(f"{TELEGRAM_API}/getUpdates", params={"offset": offset, "timeout": 60}).json()
+        r = requests.get(
+            f"{TELEGRAM_API}/getUpdates",
+            params={"offset": offset, "timeout": 60}
+        ).json()
 
         for u in r.get("result", []):
             offset = u["update_id"] + 1
