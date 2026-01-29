@@ -53,15 +53,11 @@ def market_prices():
 
     usdkrw = asset("USDKRW=X")
     jpykrw = asset("JPYKRW=X", fx=100)
-    usdjpy = asset("JPY=X")
+    usdjpy = asset("JPY=X")   # ⭐ 달러/엔 (한달 고/저 포함)
     gold = asset("GC=F")
     wti = asset("CL=F")
 
-    # 코스피200 현물
     kospi = yf.Ticker("^KS200").history(period="1d")
-
-    # ⭐ 코스피200 선물 (야간 포함)
-    kospi_f = yf.Ticker("^KS200F").history(period="1d")
 
     return (
         usdkrw,
@@ -71,10 +67,7 @@ def market_prices():
         wti,
         kospi["Close"].iloc[-1],
         kospi["High"].iloc[-1],
-        kospi["Low"].iloc[-1],
-        kospi_f["Close"].iloc[-1],
-        kospi_f["High"].iloc[-1],
-        kospi_f["Low"].iloc[-1],
+        kospi["Low"].iloc[-1]
     )
 
 # =========================
@@ -113,12 +106,7 @@ def fmt(v, suf=""):
 def build_message():
     now = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M:%S")
 
-    (
-        usdkrw, jpykrw, usdjpy, gold, wti,
-        kospi, k_high, k_low,
-        kospi_f, kf_high, kf_low
-    ) = market_prices()
-
+    usdkrw, jpykrw, usdjpy, gold, wti, kospi, k_high, k_low = market_prices()
     m = us_macro()
 
     return f"""
@@ -143,9 +131,6 @@ WTI: {fmt(wti[0])} ({arrow(wti[1])}{fmt(wti[1])})
 
 코스피200: {fmt(kospi)}
   · 당일: 고 {fmt(k_high)} / 저 {fmt(k_low)}
-
-코스피200 선물(야간): {fmt(kospi_f)}
-  · 당일: 고 {fmt(kf_high)} / 저 {fmt(kf_low)}
 
 [미국 국채 금리]
 기준금리: {fmt(m['fed'], '%')}
