@@ -3,7 +3,7 @@
 import requests
 import yfinance as yf
 from datetime import datetime
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo   # ⭐ 한국시간용
 import time
 
 # =========================
@@ -51,20 +51,15 @@ def market_prices():
 
         return close, chg, high_1m, low_1m
 
-    usdkrw = asset("USDKRW=X")
-    jpykrw = asset("JPYKRW=X", fx=100)
-    usdjpy = asset("JPY=X")        # ⭐ 1달러당 엔화
+    usd = asset("USDKRW=X")
+    jpy = asset("JPYKRW=X", fx=100)
     gold = asset("GC=F")
     wti = asset("CL=F")
 
     kospi_d = yf.Ticker("^KS200").history(period="1d")
 
     return (
-        usdkrw,
-        jpykrw,
-        usdjpy,
-        gold,
-        wti,
+        usd, jpy, gold, wti,
         kospi_d["Close"].iloc[-1],
         kospi_d["High"].iloc[-1],
         kospi_d["Low"].iloc[-1]
@@ -104,9 +99,10 @@ def fmt(v, suf=""):
 # 📝 MESSAGE
 # =========================
 def build_message():
+    # ⭐ 한국시간 적용
     now = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M:%S")
 
-    usdkrw, jpykrw, usdjpy, gold, wti, kospi, k_high, k_low = market_prices()
+    usd, jpy, gold, wti, kospi, k_high, k_low = market_prices()
     m = us_macro()
 
     return f"""
@@ -114,14 +110,11 @@ def build_message():
 {now}
 
 [시장 가격]
-달러/원: {fmt(usdkrw[0])} ({arrow(usdkrw[1])}{fmt(usdkrw[1])})
-  · 한달: 고 {fmt(usdkrw[2])} / 저 {fmt(usdkrw[3])}
+달러/원: {fmt(usd[0])} ({arrow(usd[1])}{fmt(usd[1])})
+  · 한달: 고 {fmt(usd[2])} / 저 {fmt(usd[3])}
 
-엔/원(100엔): {fmt(jpykrw[0])} ({arrow(jpykrw[1])}{fmt(jpykrw[1])})
-  · 한달: 고 {fmt(jpykrw[2])} / 저 {fmt(jpykrw[3])}
-
-달러/엔: {fmt(usdjpy[0])} ({arrow(usdjpy[1])}{fmt(usdjpy[1])})
-  · 한달: 고 {fmt(usdjpy[2])} / 저 {fmt(usdjpy[3])}
+엔/원(100엔): {fmt(jpy[0])} ({arrow(jpy[1])}{fmt(jpy[1])})
+  · 한달: 고 {fmt(jpy[2])} / 저 {fmt(jpy[3])}
 
 금: {fmt(gold[0])} ({arrow(gold[1])}{fmt(gold[1])})
   · 한달: 고 {fmt(gold[2])} / 저 {fmt(gold[3])}
