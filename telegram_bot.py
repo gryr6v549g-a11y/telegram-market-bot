@@ -9,8 +9,8 @@ import time
 # =========================
 # 🔑 TELEGRAM SETTINGS
 # =========================
-TELEGRAM_TOKEN = "너_토큰_여기"
-FRED_API_KEY = "너_FRED_KEY_여기"
+TELEGRAM_TOKEN = "8425170540:AAH4FpyLEX83vn413p-o2yINwZpIplomVEg"
+FRED_API_KEY = "27af567b7542c18ee527d92a06f330a0"
 
 TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
