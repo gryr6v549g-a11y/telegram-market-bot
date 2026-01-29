@@ -80,9 +80,8 @@ def us_macro():
 
     return {
         "fed": latest("EFFR"),
-        "t3m": latest("DTB3"),
-        "t1y": latest("DGS1"),   # ⭐ 1년물
-        "t5y": latest("DGS5"),   # ⭐ 5년물
+        "t1y": latest("DGS1"),
+        "t5y": latest("DGS5"),
         "t10y": latest("DGS10"),
         "t30y": latest("DGS30"),
         "unrate": latest("UNRATE"),
@@ -136,7 +135,6 @@ WTI: {fmt(wti[0])} ({arrow(wti[1])}{fmt(wti[1])})
 
 [미국 국채 금리]
 기준금리: {fmt(m['fed'], '%')}
-3개월: {fmt(m['t3m'], '%')}
 1년물: {fmt(m['t1y'], '%')}
 5년물: {fmt(m['t5y'], '%')}
 10년물: {fmt(m['t10y'], '%')}
