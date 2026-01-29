@@ -54,6 +54,7 @@ def market_prices():
     usdkrw = asset("USDKRW=X")
     jpykrw = asset("JPYKRW=X", fx=100)
     usdjpy = asset("JPY=X")
+
     gold = asset("GC=F")
     wti = asset("CL=F")
 
@@ -63,7 +64,8 @@ def market_prices():
     kospi_d = yf.Ticker("^KS200").history(period="1d")
 
     return (
-        usdkrw, jpykrw, usdjpy, gold, wti,
+        usdkrw, jpykrw, usdjpy,
+        gold, wti,
         kospi_d["Close"].iloc[-1],
         kospi_d["High"].iloc[-1],
         kospi_d["Low"].iloc[-1],
@@ -123,7 +125,10 @@ def build_message():
 달러/엔: {fmt(usdjpy[0])} ({arrow(usdjpy[1])}{fmt(usdjpy[1])})
 
 금: {fmt(gold[0])} ({arrow(gold[1])}{fmt(gold[1])})
+  · 한달: 고 {fmt(gold[2])} / 저 {fmt(gold[3])}
+
 WTI: {fmt(wti[0])} ({arrow(wti[1])}{fmt(wti[1])})
+  · 한달: 고 {fmt(wti[2])} / 저 {fmt(wti[3])}
 
 코스피200: {fmt(kospi)}
   · 당일 고 / 저: {fmt(k_high)} / {fmt(k_low)}
