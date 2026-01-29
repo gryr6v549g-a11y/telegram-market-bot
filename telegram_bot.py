@@ -57,22 +57,17 @@ def market_prices():
     gold = asset("GC=F")
     wti = asset("CL=F")
 
-    dxy = asset("DX-Y.NYB")   # 달러인덱스
-    vix = asset("^VIX")       # 변동성 지수
+    dxy = asset("DX-Y.NYB")
+    vix = asset("^VIX")
 
     kospi_d = yf.Ticker("^KS200").history(period="1d")
 
     return (
-        usdkrw,
-        jpykrw,
-        usdjpy,
-        gold,
-        wti,
-        dxy,
-        vix,
+        usdkrw, jpykrw, usdjpy, gold, wti,
         kospi_d["Close"].iloc[-1],
         kospi_d["High"].iloc[-1],
-        kospi_d["Low"].iloc[-1]
+        kospi_d["Low"].iloc[-1],
+        dxy, vix
     )
 
 # =========================
@@ -111,7 +106,7 @@ def fmt(v, suf=""):
 def build_message():
     now = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M:%S")
 
-    usdkrw, jpykrw, usdjpy, gold, wti, dxy, vix, kospi, k_high, k_low = market_prices()
+    usdkrw, jpykrw, usdjpy, gold, wti, kospi, k_high, k_low, dxy, vix = market_prices()
     m = us_macro()
 
     return f"""
@@ -126,14 +121,9 @@ def build_message():
   · 한달: 고 {fmt(jpykrw[2])} / 저 {fmt(jpykrw[3])}
 
 달러/엔: {fmt(usdjpy[0])} ({arrow(usdjpy[1])}{fmt(usdjpy[1])})
-  · 한달: 고 {fmt(usdjpy[2])} / 저 {fmt(usdjpy[3])}
 
 금: {fmt(gold[0])} ({arrow(gold[1])}{fmt(gold[1])})
 WTI: {fmt(wti[0])} ({arrow(wti[1])}{fmt(wti[1])})
-
-[위험 지표]
-DXY(달러지수): {fmt(dxy[0])} ({arrow(dxy[1])}{fmt(dxy[1])})
-VIX(변동성): {fmt(vix[0])} ({arrow(vix[1])}{fmt(vix[1])})
 
 코스피200: {fmt(kospi)}
   · 당일 고 / 저: {fmt(k_high)} / {fmt(k_low)}
@@ -143,6 +133,18 @@ VIX(변동성): {fmt(vix[0])} ({arrow(vix[1])}{fmt(vix[1])})
 3개월: {fmt(m['t3m'], '%')}
 10년물: {fmt(m['t10y'], '%')}
 30년물: {fmt(m['t30y'], '%')}
+
+[미국 거시지표]
+CPI YoY: {fmt(m['cpi_yoy'], '%')}
+CPI MoM: {fmt(m['cpi_mom'], '%')}
+실업률: {fmt(m['unrate'], '%')}
+비농업고용(BLS): {fmt(m['bls'])}
+ADP 민간고용: {fmt(m['adp'])}
+실질 GDP 성장률: {fmt(m['gdp'], '%')}
+
+[위험 지표]
+DXY(달러지수): {fmt(dxy[0])} ({arrow(dxy[1])}{fmt(dxy[1])})
+VIX(변동성): {fmt(vix[0])} ({arrow(vix[1])}{fmt(vix[1])})
 """.strip()
 
 # =========================
