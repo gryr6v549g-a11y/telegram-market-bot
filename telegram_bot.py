@@ -1,21 +1,24 @@
 # -*- coding: utf-8 -*-
 
+import os
 import requests
 import yfinance as yf
 from datetime import datetime
 from zoneinfo import ZoneInfo
-import time
+from flask import Flask, request
 
 # =========================
-# 🔑 TELEGRAM SETTINGS
+# 🔑 ENV (Railway Variables)
 # =========================
-TELEGRAM_TOKEN = "8425170540:AAH4FpyLEX83vn413p-o2yINwZpIplomVEg"
-FRED_API_KEY = "27af567b7542c18ee527d92a06f330a0"
+TELEGRAM_TOKEN = os.environ.get("8425170540:AAH4FpyLEX83vn413p-o2yINwZpIplomVEg")
+FRED_API_KEY = os.environ.get("27af567b7542c18ee527d92a06f330a0")
 
 TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
+app = Flask(__name__)
+
 # =========================
-# 📡 SAFE FRED FETCH
+# 📡 FRED
 # =========================
 def fred(series, limit=24):
     url = "https://api.stlouisfed.org/fred/series/observations"
@@ -36,48 +39,40 @@ def latest(series):
     return v[0] if v else None
 
 # =========================
-# 📊 MARKET PRICES
+# 📊 MARKET
 # =========================
+def asset(ticker, fx=1):
+    d2 = yf.Ticker(ticker).history(period="2d")
+    m1 = yf.Ticker(ticker).history(period="1mo")
+
+    close = d2["Close"].iloc[-1] * fx
+    prev = d2["Close"].iloc[-2] * fx
+    chg = close - prev
+
+    return (
+        close,
+        chg,
+        m1["High"].max() * fx,
+        m1["Low"].min() * fx
+    )
+
 def market_prices():
-    def asset(ticker, fx=1):
-        d2 = yf.Ticker(ticker).history(period="2d")
-        m1 = yf.Ticker(ticker).history(period="1mo")
-
-        close = d2["Close"].iloc[-1] * fx
-        prev = d2["Close"].iloc[-2] * fx
-        chg = close - prev
-        high_1m = m1["High"].max() * fx
-        low_1m = m1["Low"].min() * fx
-
-        return close, chg, high_1m, low_1m
-
     usdkrw = asset("USDKRW=X")
     jpykrw = asset("JPYKRW=X", fx=100)
     usdjpy = asset("JPY=X")
     gold = asset("GC=F")
     wti = asset("CL=F")
 
-    kospi = yf.Ticker("^KS200").history(period="1d")
-    kospi_f = yf.Ticker("^KS200F").history(period="1d")
+    ks = yf.Ticker("^KS200").history(period="1d")
+    ksf = yf.Ticker("^KS200F").history(period="1d")
 
-    return (
-        usdkrw, jpykrw, usdjpy, gold, wti,
-        kospi["Close"].iloc[-1],
-        kospi["High"].iloc[-1],
-        kospi["Low"].iloc[-1],
-        kospi_f["Close"].iloc[-1],
-        kospi_f["High"].iloc[-1],
-        kospi_f["Low"].iloc[-1],
-    )
+    return usdkrw, jpykrw, usdjpy, gold, wti, ks, ksf
 
 # =========================
 # 🇺🇸 US MACRO
 # =========================
 def us_macro():
     cpi = fred("CPIAUCSL", 13)
-    cpi_yoy = (cpi[0] / cpi[12] - 1) * 100 if len(cpi) >= 13 else None
-    cpi_mom = (cpi[0] / cpi[1] - 1) * 100 if len(cpi) >= 2 else None
-
     return {
         "fed": latest("EFFR"),
         "t3m": latest("DTB3"),
@@ -87,18 +82,15 @@ def us_macro():
         "bls": latest("PAYEMS"),
         "adp": latest("ADPWNUSERS"),
         "gdp": latest("A191RL1Q225SBEA"),
-        "cpi_yoy": cpi_yoy,
-        "cpi_mom": cpi_mom
+        "cpi_yoy": (cpi[0]/cpi[12]-1)*100 if len(cpi) >= 13 else None,
+        "cpi_mom": (cpi[0]/cpi[1]-1)*100 if len(cpi) >= 2 else None
     }
 
 # =========================
 # 📝 FORMAT
 # =========================
-def arrow(v):
-    return "▲" if v > 0 else "▼"
-
-def fmt(v, suf=""):
-    return f"{v:.2f}{suf}" if isinstance(v, (int, float)) else "N/A"
+def arrow(v): return "▲" if v > 0 else "▼"
+def fmt(v, suf=""): return f"{v:.2f}{suf}" if v is not None else "N/A"
 
 # =========================
 # 📝 MESSAGE
@@ -106,11 +98,9 @@ def fmt(v, suf=""):
 def build_message():
     now = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M:%S")
 
-    usdkrw, jpykrw, usdjpy, gold, wti, \
-    kospi, k_high, k_low, \
-    kospi_f, kf_high, kf_low = market_prices()
-
+    usdkrw, jpykrw, usdjpy, gold, wti, ks, ksf = market_prices()
     m = us_macro()
+    vix = yf.Ticker("^VIX").history(period="1d")["Close"].iloc[-1]
 
     return f"""
 [실시간 시장 브리핑]
@@ -132,11 +122,11 @@ def build_message():
 WTI: {fmt(wti[0])} ({arrow(wti[1])}{fmt(wti[1])})
   · 한달: 고 {fmt(wti[2])} / 저 {fmt(wti[3])}
 
-코스피200(현물): {fmt(kospi)}
-  · 당일: 고 {fmt(k_high)} / 저 {fmt(k_low)}
+코스피200(현물): {fmt(ks["Close"].iloc[-1])}
+  · 당일: 고 {fmt(ks["High"].iloc[-1])} / 저 {fmt(ks["Low"].iloc[-1])}
 
-코스피200 선물(야간): {fmt(kospi_f)}
-  · 당일: 고 {fmt(kf_high)} / 저 {fmt(kf_low)}
+코스피200 선물(야간): {fmt(ksf["Close"].iloc[-1])}
+  · 당일: 고 {fmt(ksf["High"].iloc[-1])} / 저 {fmt(ksf["Low"].iloc[-1])}
 
 [미국 국채 금리]
 기준금리: {fmt(m['fed'], '%')}
@@ -153,36 +143,30 @@ ADP 민간고용: {fmt(m['adp'])}
 실질 GDP 성장률: {fmt(m['gdp'], '%')}
 
 [위험 지표]
-DXY(달러지수): {fmt(latest("DTWEXBGS"))}
-VIX: {fmt(yf.Ticker("^VIX").history(period="1d")["Close"].iloc[-1])}
+DXY: {fmt(latest("DTWEXBGS"))}
+VIX: {fmt(vix)}
 """.strip()
 
 # =========================
-# 🤖 BOT LOOP
+# 🤖 WEBHOOK
 # =========================
-def run_bot():
-    offset = None
-    while True:
-        r = requests.get(
-            f"{TELEGRAM_API}/getUpdates",
-            params={"offset": offset, "timeout": 60}
-        ).json()
+@app.route("/", methods=["POST"])
+def telegram_webhook():
+    data = request.json
+    msg = data.get("message", {})
+    text = msg.get("text", "")
+    chat_id = msg.get("chat", {}).get("id")
 
-        for u in r.get("result", []):
-            offset = u["update_id"] + 1
-            msg = u.get("message", {})
-            text = msg.get("text", "")
-            chat_id = msg.get("chat", {}).get("id")
+    if text.strip() == ".":
+        requests.post(
+            f"{TELEGRAM_API}/sendMessage",
+            data={"chat_id": chat_id, "text": build_message()}
+        )
 
-            if text.strip() == ".":
-                requests.post(
-                    f"{TELEGRAM_API}/sendMessage",
-                    data={"chat_id": chat_id, "text": build_message()}
-                )
+    return "ok"
 
-        time.sleep(1)
-
-if __name__ == "__main__":
-    run_bot()
+# =========================
+# 🚀 START
+# =========================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
