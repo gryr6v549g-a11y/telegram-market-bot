@@ -110,6 +110,18 @@ def build_message():
     usdkrw, jpykrw, usdjpy, gold, wti, kospi, k_high, k_low = market_prices()
     m = us_macro()
 
+    # 달러 인덱스 (ICE)
+    dxy_hist = yf.Ticker("DX-Y.NYB").history(period="2d")
+    dxy_close = dxy_hist["Close"].iloc[-1]
+    dxy_prev = dxy_hist["Close"].iloc[-2]
+    dxy_chg = dxy_close - dxy_prev
+
+    # VIX 전일 대비
+    vix_hist = yf.Ticker("^VIX").history(period="2d")
+    vix_close = vix_hist["Close"].iloc[-1]
+    vix_prev = vix_hist["Close"].iloc[-2]
+    vix_chg = vix_close - vix_prev
+
     return f"""
 [실시간 시장 브리핑]
 {now}
@@ -149,8 +161,8 @@ ADP 민간고용: {fmt(m['adp'])}
 실질 GDP 성장률: {fmt(m['gdp'], '%')}
 
 [위험 지표]
-DXY(달러지수): {fmt(latest("DTWEXBGS"))}
-VIX(변동성): {fmt(yf.Ticker("^VIX").history(period="1d")["Close"].iloc[-1])}
+달러 인덱스: {fmt(dxy_close)} ({arrow(dxy_chg)}{fmt(dxy_chg)})
+VIX(변동성): {fmt(vix_close)} ({arrow(vix_chg)}{fmt(vix_chg)})
 """.strip()
 
 # =========================
