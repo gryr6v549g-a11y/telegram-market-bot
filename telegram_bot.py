@@ -146,10 +146,19 @@ def build_message():
 
 [시장 가격]
 달러/원: {fmt(usdkrw[0])} ({arrow(usdkrw[1])}{fmt(usdkrw[1])})
+  · 한달: 고 {fmt(usdkrw[2])} / 저 {fmt(usdkrw[3])}
+
 엔/원(100엔): {fmt(jpykrw[0])} ({arrow(jpykrw[1])}{fmt(jpykrw[1])})
+  · 한달: 고 {fmt(jpykrw[2])} / 저 {fmt(jpykrw[3])}
+
 달러/엔: {fmt(usdjpy[0])} ({arrow(usdjpy[1])}{fmt(usdjpy[1])})
+  · 한달: 고 {fmt(usdjpy[2])} / 저 {fmt(usdjpy[3])}
+
 금: {fmt(gold[0])} ({arrow(gold[1])}{fmt(gold[1])})
+  · 한달: 고 {fmt(gold[2])} / 저 {fmt(gold[3])}
+
 WTI: {fmt(wti[0])} ({arrow(wti[1])}{fmt(wti[1])})
+  · 한달: 고 {fmt(wti[2])} / 저 {fmt(wti[3])}
 
 코스피200: {fmt(kospi)} ({arrow(kospi_chg)}{fmt(kospi_chg)})
   · 당일: 고 {fmt(k_high)} / 저 {fmt(k_low)}
@@ -172,6 +181,8 @@ ADP 민간고용: {fmt(m['adp'])}
 [위험 지표]
 달러 인덱스: {fmt(dxy_close)} ({arrow(dxy_chg)}{fmt(dxy_chg)})
 VIX(변동성): {fmt(vix_close)} ({arrow(vix_chg)}{fmt(vix_chg)})
+
+솔빈이 횽아 화이팅! 용치리도 화이팅!
 """.strip()
 
 # =========================
