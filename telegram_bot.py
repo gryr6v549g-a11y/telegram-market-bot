@@ -173,7 +173,7 @@ ADP 민간고용: {fmt(m['adp'])}
 달러 인덱스: {fmt(dxy_close)} ({arrow(dxy_chg)}{fmt(dxy_chg)})
 VIX(변동성): {fmt(vix_close)} ({arrow(vix_chg)}{fmt(vix_chg)})
 
-솔빈이 횽아 화이팅! 용치리 픽스터도 화이팅!
+솔빈이 횽아 화이팅! 용치리도 화이팅!
 """.strip()
 
 # =========================
