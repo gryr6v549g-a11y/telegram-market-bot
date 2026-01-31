@@ -35,6 +35,14 @@ def latest(series):
     v = fred(series, 1)
     return v[0] if v else None
 
+def latest_with_change(series):
+    v = fred(series, 2)
+    if len(v) >= 2:
+        return v[0], v[0] - v[1]
+    elif len(v) == 1:
+        return v[0], 0
+    return None, None
+
 # =========================
 # 📊 MARKET PRICES
 # =========================
@@ -57,7 +65,12 @@ def market_prices():
     gold = asset("GC=F")
     wti = asset("CL=F")
 
-    kospi = yf.Ticker("^KS200").history(period="1d")
+    kospi_hist = yf.Ticker("^KS200").history(period="2d")
+    kospi_close = kospi_hist["Close"].iloc[-1]
+    kospi_prev = kospi_hist["Close"].iloc[-2]
+    kospi_chg = kospi_close - kospi_prev
+
+    kospi_day = yf.Ticker("^KS200").history(period="1d")
 
     return (
         usdkrw,
@@ -65,9 +78,10 @@ def market_prices():
         usdjpy,
         gold,
         wti,
-        kospi["Close"].iloc[-1],
-        kospi["High"].iloc[-1],
-        kospi["Low"].iloc[-1]
+        kospi_close,
+        kospi_chg,
+        kospi_day["High"].iloc[-1],
+        kospi_day["Low"].iloc[-1]
     )
 
 # =========================
@@ -78,12 +92,18 @@ def us_macro():
     cpi_yoy = (cpi[0] / cpi[12] - 1) * 100 if len(cpi) >= 13 else None
     cpi_mom = (cpi[0] / cpi[1] - 1) * 100 if len(cpi) >= 2 else None
 
+    fed, fed_chg = latest_with_change("EFFR")
+    t1y, t1y_chg = latest_with_change("DGS1")
+    t5y, t5y_chg = latest_with_change("DGS5")
+    t10y, t10y_chg = latest_with_change("DGS10")
+    t30y, t30y_chg = latest_with_change("DGS30")
+
     return {
-        "fed": latest("EFFR"),
-        "t1y": latest("DGS1"),
-        "t5y": latest("DGS5"),
-        "t10y": latest("DGS10"),
-        "t30y": latest("DGS30"),
+        "fed": fed, "fed_chg": fed_chg,
+        "t1y": t1y, "t1y_chg": t1y_chg,
+        "t5y": t5y, "t5y_chg": t5y_chg,
+        "t10y": t10y, "t10y_chg": t10y_chg,
+        "t30y": t30y, "t30y_chg": t30y_chg,
         "unrate": latest("UNRATE"),
         "bls": latest("PAYEMS"),
         "adp": latest("ADPWNUSERS"),
@@ -107,16 +127,14 @@ def fmt(v, suf=""):
 def build_message():
     now = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M:%S")
 
-    usdkrw, jpykrw, usdjpy, gold, wti, kospi, k_high, k_low = market_prices()
+    usdkrw, jpykrw, usdjpy, gold, wti, kospi, kospi_chg, k_high, k_low = market_prices()
     m = us_macro()
 
-    # 달러 인덱스 (ICE)
     dxy_hist = yf.Ticker("DX-Y.NYB").history(period="2d")
     dxy_close = dxy_hist["Close"].iloc[-1]
     dxy_prev = dxy_hist["Close"].iloc[-2]
     dxy_chg = dxy_close - dxy_prev
 
-    # VIX 전일 대비
     vix_hist = yf.Ticker("^VIX").history(period="2d")
     vix_close = vix_hist["Close"].iloc[-1]
     vix_prev = vix_hist["Close"].iloc[-2]
@@ -128,29 +146,20 @@ def build_message():
 
 [시장 가격]
 달러/원: {fmt(usdkrw[0])} ({arrow(usdkrw[1])}{fmt(usdkrw[1])})
-  · 한달: 고 {fmt(usdkrw[2])} / 저 {fmt(usdkrw[3])}
-
 엔/원(100엔): {fmt(jpykrw[0])} ({arrow(jpykrw[1])}{fmt(jpykrw[1])})
-  · 한달: 고 {fmt(jpykrw[2])} / 저 {fmt(jpykrw[3])}
-
 달러/엔: {fmt(usdjpy[0])} ({arrow(usdjpy[1])}{fmt(usdjpy[1])})
-  · 한달: 고 {fmt(usdjpy[2])} / 저 {fmt(usdjpy[3])}
-
 금: {fmt(gold[0])} ({arrow(gold[1])}{fmt(gold[1])})
-  · 한달: 고 {fmt(gold[2])} / 저 {fmt(gold[3])}
-
 WTI: {fmt(wti[0])} ({arrow(wti[1])}{fmt(wti[1])})
-  · 한달: 고 {fmt(wti[2])} / 저 {fmt(wti[3])}
 
-코스피200: {fmt(kospi)}
+코스피200: {fmt(kospi)} ({arrow(kospi_chg)}{fmt(kospi_chg)})
   · 당일: 고 {fmt(k_high)} / 저 {fmt(k_low)}
 
 [미국 국채 금리]
-기준금리: {fmt(m['fed'], '%')}
-1년물: {fmt(m['t1y'], '%')}
-5년물: {fmt(m['t5y'], '%')}
-10년물: {fmt(m['t10y'], '%')}
-30년물: {fmt(m['t30y'], '%')}
+기준금리: {fmt(m['fed'], '%')} ({arrow(m['fed_chg'])}{fmt(m['fed_chg'], '%')})
+1년물: {fmt(m['t1y'], '%')} ({arrow(m['t1y_chg'])}{fmt(m['t1y_chg'], '%')})
+5년물: {fmt(m['t5y'], '%')} ({arrow(m['t5y_chg'])}{fmt(m['t5y_chg'], '%')})
+10년물: {fmt(m['t10y'], '%')} ({arrow(m['t10y_chg'])}{fmt(m['t10y_chg'], '%')})
+30년물: {fmt(m['t30y'], '%')} ({arrow(m['t30y_chg'])}{fmt(m['t30y_chg'], '%')})
 
 [미국 거시지표]
 CPI YoY: {fmt(m['cpi_yoy'], '%')}
@@ -169,9 +178,7 @@ VIX(변동성): {fmt(vix_close)} ({arrow(vix_chg)}{fmt(vix_chg)})
 # 🤖 BOT LOOP
 # =========================
 def run_bot():
-    print("🤖 텔레그램 봇 실행 중... ('.' 입력 시 브리핑 전송)")
     offset = None
-
     while True:
         r = requests.get(
             f"{TELEGRAM_API}/getUpdates",
