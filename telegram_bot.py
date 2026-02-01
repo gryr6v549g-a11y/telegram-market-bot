@@ -40,7 +40,7 @@ def latest_with_change(series):
     if len(v) >= 2:
         return v[0], v[0] - v[1]
     elif len(v) == 1:
-        return v[0], 0
+        return v[0], None
     return None, None
 
 # =========================
@@ -51,11 +51,15 @@ def market_prices():
         d2 = yf.Ticker(ticker).history(period="2d")
         m1 = yf.Ticker(ticker).history(period="1mo")
 
-        close = d2["Close"].iloc[-1] * fx
-        prev = d2["Close"].iloc[-2] * fx
-        chg = close - prev
-        high_1m = m1["High"].max() * fx
-        low_1m = m1["Low"].min() * fx
+        close = d2["Close"].iloc[-1] * fx if len(d2) >= 1 else None
+
+        if len(d2) >= 2:
+            chg = (d2["Close"].iloc[-1] - d2["Close"].iloc[-2]) * fx
+        else:
+            chg = None
+
+        high_1m = m1["High"].max() * fx if not m1.empty else None
+        low_1m = m1["Low"].min() * fx if not m1.empty else None
 
         return close, chg, high_1m, low_1m
 
@@ -66,9 +70,12 @@ def market_prices():
     wti = asset("CL=F")
 
     kospi_hist = yf.Ticker("^KS200").history(period="2d")
-    kospi_close = kospi_hist["Close"].iloc[-1]
-    kospi_prev = kospi_hist["Close"].iloc[-2]
-    kospi_chg = kospi_close - kospi_prev
+    kospi_close = kospi_hist["Close"].iloc[-1] if len(kospi_hist) >= 1 else None
+
+    if len(kospi_hist) >= 2:
+        kospi_chg = kospi_hist["Close"].iloc[-1] - kospi_hist["Close"].iloc[-2]
+    else:
+        kospi_chg = None
 
     kospi_day = yf.Ticker("^KS200").history(period="1d")
 
@@ -80,8 +87,8 @@ def market_prices():
         wti,
         kospi_close,
         kospi_chg,
-        kospi_day["High"].iloc[-1],
-        kospi_day["Low"].iloc[-1]
+        kospi_day["High"].iloc[-1] if not kospi_day.empty else None,
+        kospi_day["Low"].iloc[-1] if not kospi_day.empty else None
     )
 
 # =========================
@@ -116,6 +123,8 @@ def us_macro():
 # 📝 FORMAT
 # =========================
 def arrow(v):
+    if v is None:
+        return ""
     return "▲" if v > 0 else "▼"
 
 def fmt(v, suf=""):
@@ -131,14 +140,12 @@ def build_message():
     m = us_macro()
 
     dxy_hist = yf.Ticker("DX-Y.NYB").history(period="2d")
-    dxy_close = dxy_hist["Close"].iloc[-1]
-    dxy_prev = dxy_hist["Close"].iloc[-2]
-    dxy_chg = dxy_close - dxy_prev
+    dxy_close = dxy_hist["Close"].iloc[-1] if len(dxy_hist) >= 1 else None
+    dxy_chg = (dxy_hist["Close"].iloc[-1] - dxy_hist["Close"].iloc[-2]) if len(dxy_hist) >= 2 else None
 
     vix_hist = yf.Ticker("^VIX").history(period="2d")
-    vix_close = vix_hist["Close"].iloc[-1]
-    vix_prev = vix_hist["Close"].iloc[-2]
-    vix_chg = vix_close - vix_prev
+    vix_close = vix_hist["Close"].iloc[-1] if len(vix_hist) >= 1 else None
+    vix_chg = (vix_hist["Close"].iloc[-1] - vix_hist["Close"].iloc[-2]) if len(vix_hist) >= 2 else None
 
     return f"""
 [실시간 시장 브리핑]
@@ -181,7 +188,6 @@ ADP 민간고용: {fmt(m['adp'])}
 [위험 지표]
 달러 인덱스: {fmt(dxy_close)} ({arrow(dxy_chg)}{fmt(dxy_chg)})
 VIX(변동성): {fmt(vix_close)} ({arrow(vix_chg)}{fmt(vix_chg)})
-솔빈이형 화이팅! 용치리도 화이팅!
 """.strip()
 
 # =========================
