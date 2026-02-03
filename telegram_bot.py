@@ -140,12 +140,6 @@ def build_message():
     vix_prev = vix_hist["Close"].iloc[-2]
     vix_chg = vix_close - vix_prev
 
-    # 🔥 VKOSPI 추가 (이 부분만 신규)
-    vkospi_hist = yf.Ticker("^VKOSPI").history(period="5d")
-    vkospi_close = vkospi_hist["Close"].iloc[-1]
-    vkospi_prev = vkospi_hist["Close"].iloc[-2]
-    vkospi_chg = vkospi_close - vkospi_prev
-
     return f"""
 [실시간 시장 브리핑]
 {now}
@@ -187,7 +181,6 @@ ADP 민간고용: {fmt(m['adp'])}
 [위험 지표]
 달러 인덱스: {fmt(dxy_close)} ({arrow(dxy_chg)}{fmt(dxy_chg)})
 VIX(변동성): {fmt(vix_close)} ({arrow(vix_chg)}{fmt(vix_chg)})
-VKOSPI(코스피 변동성): {fmt(vkospi_close)} ({arrow(vkospi_chg)}{fmt(vkospi_chg)})
 """.strip()
 
 # =========================
