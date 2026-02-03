@@ -5,7 +5,6 @@ import yfinance as yf
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import time
-from bs4 import BeautifulSoup   # ✅ VKOSPI 네이버용
 
 # =========================
 # 🔑 TELEGRAM SETTINGS
@@ -62,7 +61,7 @@ def market_prices():
 
     usdkrw = asset("USDKRW=X")
     jpykrw = asset("JPYKRW=X", fx=100)
-    usdjpy = asset("JPY=X", fx=100)
+    usdjpy = asset("JPY=X")
     gold = asset("GC=F")
     wti = asset("CL=F")
 
@@ -114,38 +113,6 @@ def us_macro():
     }
 
 # =========================
-# 📉 VKOSPI (NAVER)
-# =========================
-def fetch_vkospi_naver():
-    url = "https://finance.naver.com/sise/sise_index.naver?code=KOSPI200"
-    headers = {"User-Agent": "Mozilla/5.0"}
-
-    r = requests.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-
-    value = soup.select_one(
-        "#quotient > div.section.section_1 > div > table > tbody > tr:nth-child(2) > td.number_1"
-    )
-    change = soup.select_one(
-        "#quotient > div.section.section_1 > div > table > tbody > tr:nth-child(2) > td.number_2"
-    )
-
-    if not value or not change:
-        return None, None
-
-    v = float(value.text.replace(",", "").strip())
-    c_text = change.text.replace(",", "").strip()
-
-    if "▲" in c_text:
-        c = float(c_text.replace("▲", "").strip())
-    elif "▼" in c_text:
-        c = -float(c_text.replace("▼", "").strip())
-    else:
-        c = 0.0
-
-    return v, c
-
-# =========================
 # 📝 FORMAT
 # =========================
 def arrow(v):
@@ -173,8 +140,6 @@ def build_message():
     vix_prev = vix_hist["Close"].iloc[-2]
     vix_chg = vix_close - vix_prev
 
-    vkospi_close, vkospi_chg = fetch_vkospi_naver()  # ✅ 여기만 추가
-
     return f"""
 [실시간 시장 브리핑]
 {now}
@@ -186,7 +151,7 @@ def build_message():
 엔/원(100엔): {fmt(jpykrw[0])} ({arrow(jpykrw[1])}{fmt(jpykrw[1])})
   · 한달: 고 {fmt(jpykrw[2])} / 저 {fmt(jpykrw[3])}
 
-엔/달러(100엔): {fmt(usdjpy[0])} ({arrow(usdjpy[1])}{fmt(usdjpy[1])})
+달러/엔: {fmt(usdjpy[0])} ({arrow(usdjpy[1])}{fmt(usdjpy[1])})
   · 한달: 고 {fmt(usdjpy[2])} / 저 {fmt(usdjpy[3])}
 
 금: {fmt(gold[0])} ({arrow(gold[1])}{fmt(gold[1])})
@@ -216,7 +181,6 @@ ADP 민간고용: {fmt(m['adp'])}
 [위험 지표]
 달러 인덱스: {fmt(dxy_close)} ({arrow(dxy_chg)}{fmt(dxy_chg)})
 VIX(변동성): {fmt(vix_close)} ({arrow(vix_chg)}{fmt(vix_chg)})
-VKOSPI: {fmt(vkospi_close)} ({arrow(vkospi_chg)}{fmt(vkospi_chg)})
 """.strip()
 
 # =========================
