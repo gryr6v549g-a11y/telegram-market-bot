@@ -149,6 +149,8 @@ def fetch_vkospi_naver():
 # 📝 FORMAT
 # =========================
 def arrow(v):
+    if v is None:
+        return "-"
     return "▲" if v > 0 else "▼"
 
 def fmt(v, suf=""):
@@ -173,7 +175,7 @@ def build_message():
     vix_prev = vix_hist["Close"].iloc[-2]
     vix_chg = vix_close - vix_prev
 
-    vkospi_close, vkospi_chg = fetch_vkospi_naver()  # ✅ 여기만 추가
+    vkospi_close, vkospi_chg = fetch_vkospi_naver()
 
     return f"""
 [실시간 시장 브리핑]
