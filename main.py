@@ -1,4 +1,4 @@
-from telegram_bot import run_bot
+from telegram_bot import build_message
 
-if __name__ == "__main__":
-    run_bot()
+print("🤖 텔레그램 봇 실행됨")
+build_message("✅ Railway에서 텔레그램 봇 정상 작동 중")
