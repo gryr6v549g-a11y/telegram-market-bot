@@ -61,7 +61,7 @@ def market_prices():
 
     usdkrw = asset("USDKRW=X")
     jpykrw = asset("JPYKRW=X", fx=100)
-    usdjpy = asset("JPY=X", fx=100)
+    usdjpy = asset("JPY=X")
     gold = asset("GC=F")
     wti = asset("CL=F")
 
@@ -157,7 +157,7 @@ def build_message():
 엔/원(100엔): {fmt(jpykrw[0])} ({arrow(jpykrw[1])}{fmt(jpykrw[1])})
   · 한달: 고 {fmt(jpykrw[2])} / 저 {fmt(jpykrw[3])}
 
-엔/달러(100엔): {fmt(usdjpy[0])} ({arrow(usdjpy[1])}{fmt(usdjpy[1])})
+달러/엔: {fmt(usdjpy[0])} ({arrow(usdjpy[1])}{fmt(usdjpy[1])})
   · 한달: 고 {fmt(usdjpy[2])} / 저 {fmt(usdjpy[3])}
 
 금: {fmt(gold[0])} ({arrow(gold[1])}{fmt(gold[1])})
@@ -188,7 +188,6 @@ ADP 민간고용: {fmt(m['adp'])}
 달러 인덱스: {fmt(dxy_close)} ({arrow(dxy_chg)}{fmt(dxy_chg)})
 VIX(변동성): {fmt(vix_close)} ({arrow(vix_chg)}{fmt(vix_chg)})
 VKOSPI(코스피 변동성): {fmt(vkospi_close)} ({arrow(vkospi_chg)}{fmt(vkospi_chg)})
-어어 로켓 쏜다 쏜다 포모 바로 옆에 있다
 """.strip()
 
 # =========================
