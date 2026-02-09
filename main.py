@@ -1,6 +1,4 @@
-from telegram_bot import build_message
+from telegram_bot import run_bot
 
-print("🤖 텔레그램 봇 실행됨")
-
-msg = build_message()
-print(msg)
+if __name__ == "__main__":
+    run_bot()
