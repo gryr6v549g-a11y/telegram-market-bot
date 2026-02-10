@@ -35,11 +35,6 @@ def latest(series):
     v = fred(series, 1)
     return v[0] if v else None
 
-# ✅ ADP용: 최신 없으면 과거값 허용
-def latest_allow_old(series, limit=6):
-    v = fred(series, limit)
-    return v[0] if v else None
-
 def latest_with_change(series):
     v = fred(series, 2)
     if len(v) >= 2:
@@ -111,7 +106,7 @@ def us_macro():
         "t30y": t30y, "t30y_chg": t30y_chg,
         "unrate": latest("UNRATE"),
         "bls": latest("PAYEMS"),
-        "adp": latest_allow_old("ADPWNUSERS"),  # ✅ 여기만 변경
+        "adp": latest("ADPWNUSERS"),
         "gdp": latest("A191RL1Q225SBEA"),
         "cpi_yoy": cpi_yoy,
         "cpi_mom": cpi_mom
@@ -121,8 +116,6 @@ def us_macro():
 # 📝 FORMAT
 # =========================
 def arrow(v):
-    if v is None:
-        return ""
     return "▲" if v > 0 else "▼"
 
 def fmt(v, suf=""):
