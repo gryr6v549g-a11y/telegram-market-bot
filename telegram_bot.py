@@ -9,7 +9,7 @@ import time
 # =========================
 # 🔑 TELEGRAM SETTINGS
 # =========================
-ort os
+import os
 TELEGRAM_TOKEN = os.environ.get("8425170540:AAH4FpyLEX83vn413p-o2yINwZpIplomVEg")
 FRED_API_KEY = os.environ.get("27af567b7542c18ee527d92a06f330a0")
 
@@ -211,4 +211,5 @@ def run_bot():
 
 if __name__ == "__main__":
     run_bot()
+
 
